@@ -11,6 +11,9 @@ from utils import delete_metadata
 
 
 class LayerBase(object):
+    """
+    Base class for Layer API
+    """
     def __init__(self, platform_api_token, application_id, version=1.0):
         self.platform_api_token = platform_api_token
         self.application_id = application_id
@@ -59,6 +62,11 @@ class Conversation(LayerBase):
         self.headers['Content-Type'] = 'application/vnd.layer-patch+json'
 
     def add_participants(self, participants):
+        """
+        Add participants to conversation
+        :param participants: list() - Users identifiers
+        :return: No results returned
+        """
         data = requests.patch('{}/conversations/{}'.format(self.url, self.conversation_id),
                               data=json.dumps([{'operation': 'add',
                                                 'property': 'participants',
@@ -70,6 +78,11 @@ class Conversation(LayerBase):
             raise Exception(data)
 
     def remove_participants(self, participants):
+        """
+        Remove participants from conversation
+        :param participants: list() - Users identifiers
+        :return: No results returned
+        """
         participants = [unicode(i) for i in participants]
         data = requests.patch('{}/conversations/{}'.format(self.url, self.conversation_id),
                               data=json.dumps([{'operation': 'remove',
@@ -82,6 +95,11 @@ class Conversation(LayerBase):
             raise Exception(data)
 
     def replace_participants(self, participants):
+        """
+        Replace participants of conversation
+        :param participants: list() - Users identifiers
+        :return: No results returned
+        """
         participants = [unicode(i) for i in participants]
         data = requests.patch('{}/conversations/{}'.format(self.url, self.conversation_id),
                               data=json.dumps({'operation': 'set',
@@ -94,6 +112,11 @@ class Conversation(LayerBase):
             raise Exception(data)
 
     def set_metadata(self, values):
+        """
+        Set Metadata of conversation
+        :param values: list() - List of dictionaries with key-values of needed data
+        :return: No results returned
+        """
         data = requests.patch('{}/conversations/{}'.format(self.url, self.conversation_id),
                               data=json.dumps([{'operation': 'set',
                                                 'property': d.keys()[0],
@@ -105,6 +128,11 @@ class Conversation(LayerBase):
             raise Exception(data.text)
 
     def delete_metadata(self, values):
+        """
+        Delete data from metadata of conversation
+        :param values: list() - list of keys, which data should be deleted
+        :return: No results returned
+        """
         data = requests.patch('{}/conversations/{}'.format(self.url, self.conversation_id),
                               data=json.dumps([{'operation': 'delete',
                                                 'property': d} for d in values]),
@@ -117,14 +145,14 @@ class Conversation(LayerBase):
 
 class LayerAPI(LayerBase):
     """
-    Base class for Layer API
+    Main layer API class for handling conversations
     """
     def get_or_create_conversation(self, participants, metadata, distinct=False):
         """
         Get or create conversation
-        :param participants: List
-        :param metadata: Dict
-        :param distinct: Boolean
+        :param participants: list() - users, which should be added to the conversation
+        :param metadata: dict() - metadata for the conversation
+        :param distinct: boolean() - set to True if the conversation shouldn't be created in case if it exists already
         :return: Conversation object
         """
         data = requests.post('{}/conversations'.format(self.url),
@@ -137,6 +165,11 @@ class LayerAPI(LayerBase):
         raise Exception(data.text)
 
     def get_conversation(self, conversation_id):
+        """
+        Get conversation by ID
+        :param conversation_id: unicode() - conversation ID
+        :return: Conversation object
+        """
         data = requests.get('{}/conversations/{}'.format(self.url, conversation_id), headers=self.headers)
         if data.status_code == 200:
             return Conversation(platform_api_token=self.platform_api_token,

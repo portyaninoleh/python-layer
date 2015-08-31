@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 def set_dict_attrs(d, values):
     """
     Build dictionary using keys separated by dots
-    :param d: dict() - origin dict
     :param values: dict() - data (with dot separated keys) which has to be added to the origin dict
     :return: dict() - final dict including the needed additional info
     """
@@ -22,6 +21,12 @@ def set_dict_attrs(d, values):
 
 
 def del_dict_attrs(d, key):
+    """
+    Delete data from dictionary
+    :param d: dict() - origin dict
+    :param key: unicode() - dot separated keys for recursively walking through the dict and remove needed data
+    :return: dict() - origin dict without info, which should be removed
+    """
     key_parts = key.split('.')
     if len(key_parts) > 1:
         d[key_parts[:1][0]] = del_dict_attrs(d[key_parts[:1][0]], '.'.join(key_parts[1:]))
@@ -43,6 +48,12 @@ def set_metadata(d, metadata):
 
 
 def delete_metadata(d, keys):
+    """
+    Remove conversation's metadata using the layer data schema
+    :param d: dict() - Origin metadata
+    :param keys: list() - List of strings with keys which should be removed
+    :return: Final metadata
+    """
     for data in keys:
         d = del_dict_attrs(d, '.'.join(data.split('.')[1:]))
     return d
