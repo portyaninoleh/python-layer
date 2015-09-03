@@ -86,7 +86,19 @@ class Notification(object):
 
 
 class Sender(object):
+    """
+    Sender handler class
+    """
     def __init__(self, name=None, sender_id=None):
+        """
+        Constructor of Sender class. Only one parameter can be given:
+        https://developer.layer.com/docs/platform#send-a-message
+        :param name: unicode() - Name of sender in case if the message should be sent from the non human sender
+        :param sender_id: unicode() - User identifier
+        :return: No results returned
+        """
+        if name and sender_id:
+            raise Exception('Only one parameter can be given: name or sender_id')
         self.name = name
         self.sender_id = sender_id
 
@@ -94,18 +106,36 @@ class Sender(object):
         return self.sender_id if self.sender_id else self.name
 
     def get_entity(self):
+        """
+        Get the sender object in the needed for Layer format
+        :return: dict() with name or user_id data
+        """
         if self.sender_id:
             return {'user_id': self.sender_id}
         return {'name': self.name}
 
 
 class MessageParts(object):
+    """
+    Message Parts handler class
+    """
     def __init__(self, body, mime_type, encoding=None):
+        """
+        Constructor of Message Part object
+        :param body: unicode() - Plain text or base64 hash.
+        :param mime_type: unicode() - Can be 'plain/text' or 'image/[jpeg, png etc..]' depends on body of the message
+        :param encoding: unicode() - If body is the base64 hash, then this field mst be set to 'base64'
+        :return: No results returned
+        """
         self.body = body
         self.mime_type = mime_type
         self.encoding = encoding
 
     def get_part(self):
+        """
+        Get part of message in the needed format for layer API
+        :return: dict() - Constructed in the needed format message part
+        """
         result = {'body': self.body,
                   'mime_type': self.mime_type}
         if self.encoding:
@@ -114,12 +144,28 @@ class MessageParts(object):
 
 
 class Announcements(MessageBase):
+    """
+    Announcements handler class
+    """
 
     def __init__(self, parts, sender, conversation):
+        """
+        Constructor of announcement object
+        :param parts: list() - List of MessagePart objects
+        :param sender: Sender() - Sender object
+        :param conversation: Conversation() - Conversation object
+        :return: No results returned
+        """
         super(Announcements, self).__init__(parts=parts, sender=sender, conversation=conversation)
         self.recipients = list()
 
     def send(self, recipients=None, everyone=False):
+        """
+        Send announcement method
+        :param recipients: list() - list of recipients ids
+        :param everyone: boolean() - If True then announcement is sent to all users in the current application
+        :return: Announcement object
+        """
         data = {'sender': self.sender.get_entity(),
                 'parts': [i.get_part() for i in self.parts]}
         if everyone:
@@ -141,8 +187,15 @@ class Announcements(MessageBase):
 
 
 class Message(MessageBase):
+    """
+    Message handler class
+    """
 
     def send(self):
+        """
+        Send message method
+        :return: Message object if message is sent successfully. Otherwise raise error
+        """
         data = {'sender': self.sender.get_entity(),
                 'parts': [i.get_part() for i in self.parts]}
         # TODO: Left for future
@@ -307,13 +360,53 @@ class LayerAPI(LayerBase):
         :param conversation_id: unicode() - conversation ID
         :return: Conversation object
         """
-        data = requests.get('{}/conversations/{}'.format(self.url, conversation_id), headers=self.headers)
+        data = requests.get('{}/conversations/{}'.format(self.url, conversation_id),
+                            headers=self.headers)
         if data.status_code == 200:
             return Conversation(platform_api_token=self.platform_api_token,
                                 application_id=self.application_id,
                                 version=self.version,
                                 **json.loads(data.text))
         raise Exception(data.text)
+
+    def block_users(self, owner_id, user_to_block):
+        """
+        Add user to the block list
+        :param owner_id: int() or unicode() - Owner's block list identifier
+        :param user_to_block: int() or unicode() - Identifier of user which should be blocked
+        :return: No results returned
+        """
+        result = requests.post('{}/users/{}/blocks'.format(self.url, unicode(owner_id)),
+                               data=json.dumps({'user_id': unicode(user_to_block)}),
+                               headers=self.headers)
+        if result.status_code != 204:
+            raise Exception(result.text)
+
+    def get_block_list(self, owner_id):
+        """
+        Retrieve user's block list
+        :param owner_id: int() or unicode() - Identifier of block lists owner
+        :return: List of dictionaries with users' ids
+        """
+        result = requests.get('{}/users/{}/blocks'.format(self.url, unicode(owner_id)),
+                              headers=self.headers)
+        if result.status_code == 200:
+            return json.loads(result.text)
+        raise Exception(result.text)
+
+    def delete_user_from_block_list(self, owner_id, user_id):
+        """
+        Remove user from block list
+        :param owner_id: int() or unicode() - Identifier of block lists owner
+        :param user_id: int() or unicode() - Identifier of user, which should be unblocked
+        :return: No results returned
+        """
+        result = requests.delete('{}/users/{}/blocks/{}'.format(self.url,
+                                                                unicode(owner_id),
+                                                                unicode(user_id)),
+                                 headers=self.headers)
+        if result.status_code != 204:
+            raise Exception(result.text)
 
 
 
