@@ -351,7 +351,6 @@ class LayerAPI(LayerBase):
                                               'metadata': metadata}),
                              headers=self.headers)
         if data.status_code in [200, 201]:
-            print(data.text)
             return Conversation(platform_api_token=self.platform_api_token,
                                 application_id=self.application_id, **json.loads(data.text))
         raise Exception(data.text)
