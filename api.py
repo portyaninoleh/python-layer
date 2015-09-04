@@ -226,11 +226,11 @@ class Conversation(LayerBase):
                  id,
                  participants,
                  distinct,
-                 metadata,
                  created_at,
                  platform_api_token,
                  application_id,
-                 version=1.0):
+                 version=1.0,
+                 metadata=None):
         """
         Build conversation object
         :param url: String
@@ -350,8 +350,10 @@ class LayerAPI(LayerBase):
                                               'distinct': distinct,
                                               'metadata': metadata}),
                              headers=self.headers)
-        if data.status_code == 201:
-            return Conversation(**json.loads(data.text))
+        if data.status_code in [200, 201]:
+            print(data.text)
+            return Conversation(platform_api_token=self.platform_api_token,
+                                application_id=self.application_id, **json.loads(data.text))
         raise Exception(data.text)
 
     def get_conversation(self, conversation_id):
