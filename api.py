@@ -346,7 +346,7 @@ class LayerAPI(LayerBase):
         :return: Conversation object
         """
         data = requests.post('{}/conversations'.format(self.url),
-                             data=json.dumps({'participants': participants,
+                             data=json.dumps({'participants': [unicode(i) for i in participants],
                                               'distinct': distinct,
                                               'metadata': metadata}),
                              headers=self.headers)
